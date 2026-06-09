@@ -10,7 +10,6 @@ Uso típico (pelo shelf_inspector):
     from rate_limiter import chamar_com_backoff
     texto = chamar_com_backoff(cliente, conteudo)
 """
-
 from __future__ import annotations
 
 import logging
@@ -22,10 +21,7 @@ from google import genai
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
 # Janela deslizante de timestamps (pedidos do último minuto)
-# ---------------------------------------------------------------------------
-
 _timestamps_pedidos: list[float] = []
 
 
@@ -42,10 +38,7 @@ def aguardar_limite_taxa() -> None:
     _timestamps_pedidos.append(time.monotonic())
 
 
-def chamar_com_backoff(
-    cliente: genai.Client,
-    conteudo: list,
-) -> str:
+def chamar_com_backoff(cliente: genai.Client, conteudo: list) -> str:
     """
     Envia o pedido à API Gemini com backoff exponencial em caso de erro 429.
 
@@ -83,6 +76,3 @@ def chamar_com_backoff(
             )
             time.sleep(atraso)
             atraso = min(atraso * 2, config.BACKOFF_MAX_DELAY)
-
-        except Exception:
-            raise

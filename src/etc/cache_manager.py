@@ -7,14 +7,12 @@ Responsabilidades:
   - Controlo e persistência da quota diária de pedidos à API (Secção 4.4)
 
 Uso típico (pelo shelf_inspector):
-    cache = CacheManager(config.CACHE_DIR, config.QUOTA_FILE, ...)
+    cache = CacheManager(config.CACHE_DIR, config.QUOTA_FILE)
     resultado = cache.get(chave)
     if resultado is None:
         resultado = chamar_api(...)
         cache.set(chave, resultado)
 """
-import config
-
 from __future__ import annotations
 
 import hashlib
@@ -22,7 +20,8 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+
+import config
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +57,7 @@ class CacheManager:
         """Gera a chave de cache: MD5 do ficheiro de imagem + estratégia."""
         return f"{self._md5(caminho_imagem)}_{estrategia}"
 
-    def get(self, chave: str) -> Optional[dict]:
+    def get(self, chave: str) -> dict | None:
         """Devolve o resultado guardado em cache, ou None se não existir."""
         ficheiro = self.cache_dir / f"{chave}.json"
         if ficheiro.exists():
@@ -85,14 +84,12 @@ class CacheManager:
         if not self.cache_dir.exists():
             return 0
 
-        contagem = 0
-        for ficheiro in self.cache_dir.glob("*.json"):
-            if ficheiro.name != "_quota.json":
-                ficheiro.unlink()
-                contagem += 1
+        ficheiros = [f for f in self.cache_dir.glob("*.json") if f.name != "_quota.json"]
+        for ficheiro in ficheiros:
+            ficheiro.unlink()
 
-        logger.info(f"Cache limpa: {contagem} ficheiro(s) removido(s).")
-        return contagem
+        logger.info(f"Cache limpa: {len(ficheiros)} ficheiro(s) removido(s).")
+        return len(ficheiros)
 
     # ------------------------------------------------------------------
     # Quota diária — interface pública
@@ -140,7 +137,6 @@ class CacheManager:
             dados = json.loads(self.quota_file.read_text(encoding="utf-8"))
             if dados.get("date") == hoje:
                 return dados
-        # Ficheiro não existe ou é de ontem — começa do zero
         return {"date": hoje, "count": 0}
 
     def _escrever_quota(self, quota: dict) -> None:

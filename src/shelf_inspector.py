@@ -7,16 +7,15 @@ um JSON estruturado conforme o schema da Secção 4.2.
 
 python src/shelf_inspector.py --random
 """
-
 from __future__ import annotations
 
 import argparse
 import json
 import logging
-import os
 import random
 import sys
 from datetime import datetime, timezone
+from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
@@ -27,12 +26,11 @@ from google import genai
 from google.genai import types
 
 # ---------------------------------------------------------------------------
-# Resolução de Caminhos Absolutos
+# Resolução de Caminhos
 # ---------------------------------------------------------------------------
-# Independentemente de onde corres o script no terminal, estas variáveis
-# descobrem sempre a localização correta do projeto.
+
 SCRIPT_DIR = Path(__file__).resolve().parent
-BASE_DIR = SCRIPT_DIR.parent  # Aponta para a pasta ./tp2
+BASE_DIR = SCRIPT_DIR.parent
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -57,35 +55,17 @@ EstrategiaPrompting = Literal["A", "B", "C"]
 
 _cache = CacheManager(
     cache_dir=config.CACHE_DIR,
-    quota_file=config.QUOTA_FILE
+    quota_file=config.QUOTA_FILE,
 )
 
-_MAPA_MIME = {
-    ".jpg": "image/jpeg",
-    ".jpeg": "image/jpeg",
-    ".png": "image/png",
-    ".webp": "image/webp",
-    ".gif": "image/gif",
-    ".bmp": "image/bmp",
-}
-
-
 # ---------------------------------------------------------------------------
-# Prompts — carregados com caminhos absolutos
+# Prompts
 # ---------------------------------------------------------------------------
 
 def _carregar_prompt(estrategia: EstrategiaPrompting, caminho_imagem: str, id_zona: str) -> str:
     """Lê o template da estratégia indicada e substitui as variáveis."""
-    schema_path = BASE_DIR / "prompts" / "schema_reminder.txt"
-    strategy_path = BASE_DIR / "prompts" / f"strategy_{estrategia.lower()}.txt"
-
-    if not schema_path.exists():
-        raise FileNotFoundError(f"Ficheiro de schema não encontrado em: {schema_path}")
-    if not strategy_path.exists():
-        raise FileNotFoundError(f"Ficheiro de prompt não encontrado em: {strategy_path}")
-
-    schema = schema_path.read_text(encoding="utf-8").strip()
-    template = strategy_path.read_text(encoding="utf-8")
+    schema = (BASE_DIR / "prompts" / "schema_reminder.txt").read_text(encoding="utf-8").strip()
+    template = (BASE_DIR / "prompts" / f"strategy_{estrategia.lower()}.txt").read_text(encoding="utf-8")
 
     return (
         template
@@ -95,6 +75,7 @@ def _carregar_prompt(estrategia: EstrategiaPrompting, caminho_imagem: str, id_zo
     )
 
 
+@lru_cache(maxsize=1)
 def _get_client() -> genai.Client:
     if not config.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY não definida. Verifica o ficheiro .env.")
@@ -113,9 +94,7 @@ def _extrair_json(texto: str) -> dict:
         return json.loads(texto)
 
     for parte in texto.split("```"):
-        parte = parte.strip()
-        if parte.startswith("json"):
-            parte = parte[4:].strip()
+        parte = parte.strip().removeprefix("json").strip()
         try:
             return json.loads(parte)
         except json.JSONDecodeError:
@@ -161,13 +140,12 @@ def inspecionar_prateleira(
     id_zona: str = config.DEFAULT_ZONE_ID,
     estrategia: EstrategiaPrompting = config.DEFAULT_STRATEGY,
 ) -> dict:
-    if not os.path.exists(caminho_imagem):
+    if not Path(caminho_imagem).exists():
         raise FileNotFoundError(f"Imagem não encontrada: {caminho_imagem}")
 
     if estrategia not in ("A", "B", "C"):
         raise ValueError(f"Estratégia inválida: {estrategia!r}. Usa 'A', 'B' ou 'C'.")
 
-    # Tenta devolver resultado em cache antes de qualquer chamada à API
     chave = _cache.chave(caminho_imagem, estrategia)
     resultado_em_cache = _cache.get(chave)
     if resultado_em_cache is not None:
@@ -179,24 +157,20 @@ def inspecionar_prateleira(
             "Novas inspeções só serão possíveis amanhã (UTC)."
         )
 
-    cliente = _get_client()
     logger.info(
-        f"A processar: {os.path.basename(caminho_imagem)} "
+        f"A processar: {Path(caminho_imagem).name} "
         f"| zona: {id_zona} | estratégia: {estrategia}"
     )
-
-    _, extensao = os.path.splitext(caminho_imagem.lower())
-    tipo_mime = _MAPA_MIME.get(extensao, "image/jpeg")
 
     conteudo = [
         types.Part.from_bytes(
             data=Path(caminho_imagem).read_bytes(),
-            mime_type=tipo_mime,
+            mime_type="image/jpeg",
         ),
         _carregar_prompt(estrategia, caminho_imagem, id_zona),
     ]
 
-    texto_bruto = chamar_com_backoff(cliente, conteudo)
+    texto_bruto = chamar_com_backoff(_get_client(), conteudo)
     _cache.incrementar_quota()
     logger.info("Resposta recebida da API Gemini.")
 
@@ -235,8 +209,9 @@ def limpar_cache() -> int:
 
 
 # ---------------------------------------------------------------------------
-# CLI — Entrada por linha de comandos
+# CLI
 # ---------------------------------------------------------------------------
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Inspetor de prateleiras — Retail Vision Intelligence System",
@@ -244,7 +219,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "imagem",
         nargs="?",
-        help="Caminho para a imagem da prateleira (JPEG, PNG, WEBP, …)",
+        help="Caminho para a imagem da prateleira (JPEG)",
     )
     parser.add_argument(
         "--zona",
@@ -292,13 +267,12 @@ if __name__ == "__main__":
             sys.exit(1)
 
         imagens_encontradas = [
-            p
-            for ext in _MAPA_MIME
-            for p in [*dir_path.glob(f"*{ext}"), *dir_path.glob(f"*{ext.upper()}")]
+            p for p in dir_path.iterdir()
+            if p.suffix.lower() in (".jpg", ".jpeg")
         ]
 
         if not imagens_encontradas:
-            print(f"Erro: Nenhuma imagem válida encontrada em '{dir_path}'.", file=sys.stderr)
+            print(f"Erro: Nenhuma imagem JPEG encontrada em '{dir_path}'.", file=sys.stderr)
             sys.exit(1)
 
         args.imagem = str(random.choice(imagens_encontradas))
