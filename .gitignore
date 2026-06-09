@@ -1,0 +1,4 @@
+.env
+data/images
+logs/*.log
+__pycache__/

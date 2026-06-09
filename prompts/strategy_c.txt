@@ -1,0 +1,64 @@
+Vais analisar imagens de prateleiras de supermercado. Aqui estão três análises anteriores correctas para guiar o teu raciocínio:
+
+=== EXEMPLO 1: prateleira crítica (fill rate ~25%) ===
+Contexto: prateleira de laticínios, zona Z_S2
+Raciocínio: Nível superior quase vazio (~80%), apenas 2 iogurtes no canto direito.
+Nível central com lacuna central grande (~60% vazio). Nível inferior praticamente
+vazio com 2 embalagens tombadas. Fill rate global: 25%. Produto tombado = severity high.
+JSON resultado (resumido):
+{
+  "overall_status": "critical", "shelf_fill_rate": 0.25,
+  "issues": [
+    {"issue_id":"ISS_001","type":"empty_shelf","location":"nível superior, lado esquerdo",
+     "severity":"high","confidence":0.92,"affected_area_pct":0.80,
+     "description":"Prateleira superior quase vazia"},
+    {"issue_id":"ISS_002","type":"damaged","location":"nível inferior",
+     "severity":"high","confidence":0.88,"affected_area_pct":0.15,
+     "description":"Dois produtos tombados"}
+  ],
+  "products_detected":["iogurtes","leites","queijos"],
+  "model_reasoning":"Análise nível a nível revelou fill rate crítico de 25% e produtos tombados."
+}
+
+=== EXEMPLO 2: prateleira em bom estado (fill rate ~92%) ===
+Contexto: prateleira de snacks, zona Z_S1
+Raciocínio: Todos os 4 níveis bem preenchidos. Produtos alinhados. Uma etiqueta
+levemente inclinada no nível 2, não constitui problema grave. Fill rate: 92%.
+JSON resultado (resumido):
+{
+  "overall_status": "ok", "shelf_fill_rate": 0.92,
+  "issues": [
+    {"issue_id":"ISS_001","type":"label_missing","location":"nível 2, extremo direito",
+     "severity":"low","confidence":0.65,"affected_area_pct":0.02,
+     "description":"Etiqueta de preço desalinhada"}
+  ],
+  "products_detected":["snacks","bolachas","chocolates"],
+  "model_reasoning":"Prateleira bem organizada. Única anomalia: etiqueta inclinada de baixo impacto."
+}
+
+=== EXEMPLO 3: violação de planograma (fill rate ~65%) ===
+Contexto: prateleira de bebidas, zona Z_S4
+Raciocínio: Nível central mistura sumos e águas com gás — violação de planograma.
+3 posições vazias no nível inferior. Fill rate: 65%.
+JSON resultado (resumido):
+{
+  "overall_status": "warning", "shelf_fill_rate": 0.65,
+  "issues": [
+    {"issue_id":"ISS_001","type":"wrong_product","location":"nível central",
+     "severity":"medium","confidence":0.80,"affected_area_pct":0.30,
+     "description":"Sumos misturados com águas — violação de planograma"},
+    {"issue_id":"ISS_002","type":"empty_shelf","location":"nível inferior",
+     "severity":"medium","confidence":0.90,"affected_area_pct":0.20,
+     "description":"3 posições sem produto"}
+  ],
+  "products_detected":["sumos","águas","bebidas"],
+  "model_reasoning":"Mistura de categorias no nível central e 3 lacunas no inferior."
+}
+
+---
+AGORA analisa a seguinte imagem da zona {zone_id}.
+image_path: {image_path}
+
+Usa o mesmo padrão de raciocínio dos exemplos. Coloca o raciocínio completo no campo model_reasoning.
+
+{schema}

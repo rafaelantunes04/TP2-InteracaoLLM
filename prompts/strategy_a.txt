@@ -1,0 +1,6 @@
+Analisa esta imagem de prateleira de supermercado da zona {zone_id}.
+image_path: {image_path}
+
+Identifica todos os problemas operacionais visíveis (prateleiras vazias, produtos errados, danos, desalinhamento, etiquetas em falta) e avalia o estado geral. Calcula o fill rate estimado (0.0 a 1.0) e lista os produtos detectados.
+
+{schema}

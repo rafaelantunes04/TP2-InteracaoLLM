@@ -1,0 +1,23 @@
+Responde EXCLUSIVAMENTE com um objeto JSON válido. Não incluas markdown, blocos de código (```), nem texto extra fora do JSON. O JSON deve seguir exactamente este schema:
+{
+  "inspection_id": "INS_YYYYMMDD_HHMMSS_001",
+  "timestamp": "2025-03-17T14:30:22Z",
+  "image_path": "<caminho fornecido>",
+  "zone_id": "<zone_id fornecido>",
+  "overall_status": "ok|warning|critical",
+  "issues": [
+    {
+      "issue_id": "ISS_001",
+      "type": "empty_shelf|wrong_product|damaged|misaligned|label_missing|other",
+      "location": "descrição da localização na prateleira",
+      "severity": "low|medium|high",
+      "description": "descrição em linguagem natural do problema",
+      "confidence": 0.85,
+      "affected_area_pct": 0.30
+    }
+  ],
+  "shelf_fill_rate": 0.75,
+  "products_detected": ["laticínios", "iogurtes"],
+  "model_reasoning": "cadeia de raciocínio explícita antes da classificação final"
+}
+Se não houver problemas, retorna "issues": [].

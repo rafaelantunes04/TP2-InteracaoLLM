@@ -1,0 +1,25 @@
+{
+  "inspection_id": "INS_20250523_101500_001",
+  "timestamp": "2025-05-23T10:15:00Z",
+  "image_path": "C:\\Users\\Rafael Antunes\\Desktop\\Cadeiras IA\\Interação com Modelos de Larga Escala\\tp2\\data\\images\\test_313.jpg",
+  "zone_id": "Z_S1",
+  "overall_status": "ok",
+  "issues": [
+    {
+      "issue_id": "ISS_001",
+      "type": "empty_shelf",
+      "location": "Prateleira central, lado direito, secção inferior",
+      "severity": "low",
+      "description": "Pequeno espaço vazio na zona de produtos da marca U by Kotex, sugerindo rutura de stock pontual.",
+      "confidence": 0.85,
+      "affected_area_pct": 0.05
+    }
+  ],
+  "shelf_fill_rate": 0.95,
+  "products_detected": [
+    "tampões",
+    "pensos higiénicos",
+    "produtos de incontinência"
+  ],
+  "model_reasoning": "PASSO 1: A imagem mostra um corredor de produtos de higiene feminina (pensos e tampões) bem organizado, com 6 níveis principais de prateleiras. Estado geral bom, com boa disposição dos produtos. PASSO 2: A prateleira está maioritariamente cheia. As zonas superior e central apresentam organização impecável. Na zona inferior direita, nota-se uma pequena falha de stock onde os produtos da marca U by Kotex deveriam estar. Etiquetas de preço presentes e alinhadas. PASSO 3: Identificada uma pequena rutura de stock (empty_shelf) na parte inferior direita. Severidade baixa por ser apenas um espaço restrito. PASSO 4: O estado geral é considerado 'ok', pois a organização é excelente e a falha de stock é mínima, não afetando a experiência de compra de forma significativa. PASSO 5: Preenchimento do JSON conforme solicitado."
+}

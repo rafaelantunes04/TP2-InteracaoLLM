@@ -1,0 +1,24 @@
+Analisa esta imagem de prateleira de supermercado da zona {zone_id}.
+image_path: {image_path}
+
+Segue OBRIGATORIAMENTE os seguintes passos antes de produzir o JSON:
+
+PASSO 1 — DESCRIÇÃO GERAL
+Descreve o que vês: tipo de prateleira, número de níveis, produtos visíveis, estado geral de organização.
+
+PASSO 2 — ANÁLISE ZONA A ZONA
+Divide a prateleira em regiões (superior/central/inferior × esquerda/centro/direita). Para cada região: quantos produtos há? Há espaços vazios? Produtos tombados ou danificados? Etiquetas visíveis?
+
+PASSO 3 — IDENTIFICAÇÃO DE ANOMALIAS
+Lista cada anomalia: tipo, localização exacta, severidade (low/medium/high), confiança estimada (0.0–1.0) e percentagem da área afectada.
+
+PASSO 4 — CLASSIFICAÇÃO GLOBAL
+Decide o overall_status:
+  ok       → sem anomalias ou apenas problemas menores isolados
+  warning  → anomalias moderadas que requerem atenção
+  critical → problemas graves ou generalizados que afectam vendas
+
+PASSO 5 — JSON FINAL
+Coloca TODO o raciocínio dos passos 1–4 no campo model_reasoning. Depois produz o JSON completo.
+
+{schema}
