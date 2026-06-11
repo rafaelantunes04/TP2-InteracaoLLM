@@ -1,15 +1,3 @@
-"""
-rate_limiter.py — Controlo de taxa de pedidos e backoff exponencial
-Retail Vision Intelligence System — LIACD TP2
-
-Responsabilidades:
-  - Impedir que o número de pedidos por minuto exceda MAX_REQUESTS_PER_MINUTE
-  - Retentar chamadas à API com backoff exponencial em caso de erro 429
-
-Uso típico (pelo shelf_inspector):
-    from rate_limiter import chamar_com_backoff
-    texto = chamar_com_backoff(cliente, conteudo)
-"""
 from __future__ import annotations
 
 import logging
@@ -21,12 +9,12 @@ from google import genai
 
 logger = logging.getLogger(__name__)
 
-# Janela deslizante de timestamps (pedidos do último minuto)
+# Janela deslizante com os timestamps dos pedidos feitos no ultimo minuto
 _timestamps_pedidos: list[float] = []
 
 
 def aguardar_limite_taxa() -> None:
-    """Bloqueia se o número de pedidos no último minuto atingiu o limite."""
+    """Bloqueia a execução se o número de pedidos no último minuto já atingiu o limite."""
     agora = time.monotonic()
     _timestamps_pedidos[:] = [t for t in _timestamps_pedidos if agora - t < 60.0]
 
@@ -40,21 +28,12 @@ def aguardar_limite_taxa() -> None:
 
 def chamar_com_backoff(cliente: genai.Client, conteudo: list) -> str:
     """
-    Envia o pedido à API Gemini com backoff exponencial em caso de erro 429.
+    Envia o pedido à API Gemini, repetindo com backoff exponencial sempre
+     que a API responde com erro 429 (demasiados pedidos).
 
-    Parâmetros
-    ----------
-    cliente  : instância autenticada de genai.Client
-    conteudo : lista de parts (imagem + prompt) a enviar
-
-    Devolve
-    -------
-    O texto bruto da resposta da API.
-
-    Raises
-    ------
-    TooManyRequests | ResourceExhausted
-        Se o limite de tentativas for atingido sem sucesso.
+    Devolve o texto bruto da resposta. Se as tentativas se esgotarem sem
+     sucesso, a excepção da API (TooManyRequests ou ResourceExhausted) é
+     propagada.
     """
     atraso = config.BACKOFF_INITIAL_DELAY
 
@@ -70,6 +49,7 @@ def chamar_com_backoff(cliente: genai.Client, conteudo: list) -> str:
         except (TooManyRequests, ResourceExhausted):
             if tentativa == config.BACKOFF_MAX_RETRIES:
                 raise
+
             logger.warning(
                 f"Erro 429 — tentativa {tentativa}/{config.BACKOFF_MAX_RETRIES}. "
                 f"Backoff: {atraso:.0f}s …"

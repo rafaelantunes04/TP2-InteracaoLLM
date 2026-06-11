@@ -1,7 +1,3 @@
-
-#python src/shelf_inspector.py --random
-
-
 from __future__ import annotations
 
 import argparse
@@ -19,9 +15,9 @@ from etc.rate_limiter import chamar_com_backoff
 from google import genai
 from google.genai import types
 
-# ---------------------------------------------------------------------------
-# Logging
-# ---------------------------------------------------------------------------
+# python src/shelf_inspector.py --random
+
+# --- Logging ---
 
 os.makedirs(os.path.dirname(config.LOG_FILE), exist_ok=True)
 
@@ -35,10 +31,7 @@ logger = logging.getLogger(__name__)
 
 EstrategiaPrompting = Literal["A", "B", "C"]
 
-# ---------------------------------------------------------------------------
-# Instância partilhada de CacheManager
-# ---------------------------------------------------------------------------
-
+# Instancia partilhada de cache + quota
 _cache = CacheManager()
 
 _MAPA_MIME = {
@@ -51,12 +44,10 @@ _MAPA_MIME = {
 }
 
 
-# ---------------------------------------------------------------------------
-# Prompts — carregados com caminhos do config
-# ---------------------------------------------------------------------------
+# --- Prompts ---
 
 def _carregar_prompt(estrategia: EstrategiaPrompting, caminho_imagem: str, id_zona: str) -> str:
-    """Lê o template da estratégia indicada e substitui as variáveis."""
+    """Lê o template da estratégia indicada e substitui o schema, a imagem e a zona."""
     schema_path = os.path.join(config.PROMPTS_DIR, "schema_reminder.txt")
     strategy_path = os.path.join(config.PROMPTS_DIR, f"strategy_{estrategia.lower()}.txt")
 
@@ -79,17 +70,16 @@ def _carregar_prompt(estrategia: EstrategiaPrompting, caminho_imagem: str, id_zo
 
 
 def _get_client() -> genai.Client:
+    """Cria o cliente da API Gemini a partir da chave definida no .env."""
     if not config.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY não definida. Verifica o ficheiro .env.")
     return genai.Client(api_key=config.GEMINI_API_KEY)
 
 
-# ---------------------------------------------------------------------------
-# Parser de JSON
-# ---------------------------------------------------------------------------
+# --- Parser de JSON ---
 
 def _extrair_json(texto: str) -> dict:
-    """Extrai o JSON da resposta removendo blocos markdown se existirem."""
+    """Extrai o JSON da resposta, removendo blocos markdown se existirem."""
     texto = texto.strip()
 
     if "```" not in texto:
@@ -107,12 +97,8 @@ def _extrair_json(texto: str) -> dict:
     raise json.JSONDecodeError("Nenhum bloco JSON válido encontrado", texto, 0)
 
 
-# ---------------------------------------------------------------------------
-# Construção do resultado de erro de parse
-# ---------------------------------------------------------------------------
-
 def _resultado_erro_parse(erro: Exception, texto_bruto: str, caminho_imagem: str, id_zona: str) -> dict:
-    """Constrói um resultado estruturado quando o parse da resposta falha."""
+    """Constrói um resultado estruturado quando o parse da resposta da API falha."""
     momento = datetime.now(timezone.utc)
     return {
         "inspection_id": f"INS_{momento.strftime('%Y%m%d_%H%M%S')}_ERR",
@@ -135,15 +121,21 @@ def _resultado_erro_parse(erro: Exception, texto_bruto: str, caminho_imagem: str
     }
 
 
-# ---------------------------------------------------------------------------
-# Função principal de inspeção
-# ---------------------------------------------------------------------------
+# --- Inspecao ---
 
 def inspecionar_prateleira(
     caminho_imagem: str,
     id_zona: str = config.DEFAULT_ZONE_ID,
     estrategia: EstrategiaPrompting = config.DEFAULT_STRATEGY,
 ) -> dict:
+    """
+    Analisa a imagem da prateleira indicada com a estratégia de prompting
+     escolhida e devolve o JSON estruturado da inspeção (Secção 4.2).
+
+    Antes de chamar a API verifica se já existe resultado em cache para a
+     mesma imagem + estratégia, e só chama a API se a quota diária ainda
+     não estiver esgotada.
+    """
     if not os.path.exists(caminho_imagem):
         raise FileNotFoundError(f"Imagem não encontrada: {caminho_imagem}")
 
@@ -158,7 +150,7 @@ def inspecionar_prateleira(
 
     if _cache.quota_esgotada():
         raise RuntimeError(
-            f"⚠️ Quota diária esgotada ({config.MAX_REQUESTS_PER_DAY} req/dia). "
+            f"Quota diária esgotada ({config.MAX_REQUESTS_PER_DAY} req/dia). "
             "Novas inspeções só serão possíveis amanhã (UTC)."
         )
 
@@ -192,7 +184,7 @@ def inspecionar_prateleira(
 
 
 def _processar_resposta(texto_bruto: str, caminho_imagem: str, id_zona: str) -> dict:
-    """Faz parse do JSON devolvido pela API e preenche os campos obrigatórios."""
+    """Faz parse do JSON devolvido pela API e preenche os campos obrigatórios em falta."""
     try:
         dados = _extrair_json(texto_bruto)
     except (ValueError, json.JSONDecodeError) as erro:
@@ -220,9 +212,8 @@ def limpar_cache() -> int:
     return _cache.limpar()
 
 
-# ---------------------------------------------------------------------------
-# CLI — Entrada por linha de comandos
-# ---------------------------------------------------------------------------
+# --- CLI ---
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -286,7 +277,7 @@ if __name__ == "__main__":
             sys.exit(1)
 
         args.imagem = random.choice(imagens_encontradas)
-        print(f"🎲 Imagem sorteada: {args.imagem}\n")
+        print(f"Imagem sorteada: {args.imagem}\n")
 
     if not args.imagem:
         parser.print_help()

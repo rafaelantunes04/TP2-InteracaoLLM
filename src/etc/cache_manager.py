@@ -1,22 +1,5 @@
-"""
-cache_manager.py — Gestão de cache local e quota diária
-Retail Vision Intelligence System — LIACD TP2
-
-Responsabilidades:
-  - Cache de resultados em disco por chave MD5 + estratégia (Secção 4.4)
-  - Controlo e persistência da quota diária de pedidos à API (Secção 4.4)
-
-Uso típico (pelo shelf_inspector):
-    cache = CacheManager(config.CACHE_DIR, config.QUOTA_FILE)
-    resultado = cache.get(chave)
-    if resultado is None:
-        resultado = chamar_api(...)
-        cache.set(chave, resultado)
-"""
-
 from __future__ import annotations
 
-import config
 import hashlib
 import json
 import logging
@@ -24,24 +7,21 @@ import os
 from datetime import datetime, timezone
 from typing import Optional
 
+import config
+
 logger = logging.getLogger(__name__)
 
 
 class CacheManager:
     """
-    Gere a cache local de resultados e a quota diária da API Gemini.
+    Gere a cache local de resultados das inspeções e a quota diária da API Gemini.
 
-    Cache
-    -----
-    A chave é gerada a partir do hash MD5 da imagem + estratégia de prompting.
-    Isto garante que qualquer alteração ao ficheiro de imagem invalida o cache,
-    mas que imagens idênticas analisadas com a mesma estratégia reutilizam o
-    resultado sem consumir quota.
+    A chave de cache é o hash MD5 da imagem + estratégia de prompting, o que
+     garante que mudar a imagem invalida o cache, mas que a mesma imagem
+     analisada com a mesma estratégia reaproveita o resultado sem gastar quota.
 
-    Quota
-    -----
-    O contador de pedidos é guardado num ficheiro JSON e reposto a zero
-    automaticamente no início de cada dia UTC.
+    O contador de pedidos é guardado num ficheiro JSON e é reposto a zero
+     automaticamente assim que muda o dia em UTC.
     """
 
     def __init__(self):
@@ -50,12 +30,10 @@ class CacheManager:
         self.max_req_dia = config.MAX_REQUESTS_PER_DAY
         self.max_req_minuto = config.MAX_REQUESTS_PER_MINUTE
 
-    # ------------------------------------------------------------------
-    # Cache — interface pública
-    # ------------------------------------------------------------------
+    # --- Cache ---
 
     def chave(self, caminho_imagem: str, estrategia: str) -> str:
-        """Gera a chave de cache: MD5 do ficheiro de imagem + estratégia."""
+        """Gera a chave de cache a partir do MD5 da imagem e da estratégia usada."""
         return f"{self._md5(caminho_imagem)}_{estrategia}"
 
     def get(self, chave: str) -> Optional[dict]:
@@ -65,11 +43,12 @@ class CacheManager:
             logger.info("Cache HIT — a retornar resultado em cache.")
             with open(ficheiro, "r", encoding="utf-8") as f:
                 return json.load(f)
+
         logger.debug(f"Cache MISS para chave: {chave}")
         return None
 
     def set(self, chave: str, resultado: dict) -> None:
-        """Guarda o resultado em disco."""
+        """Guarda o resultado de uma inspeção em disco."""
         os.makedirs(self.cache_dir, exist_ok=True)
         ficheiro = os.path.join(self.cache_dir, f"{chave}.json")
         with open(ficheiro, "w", encoding="utf-8") as f:
@@ -77,9 +56,9 @@ class CacheManager:
         logger.info(f"Resultado guardado em cache: {ficheiro}")
 
     def limpar(self) -> int:
-        """Remove todos os ficheiros de cache (sem apagar o ficheiro de quota).
-
-        Devolve o número de ficheiros removidos.
+        """
+        Remove todos os ficheiros de cache, sem mexer no ficheiro de quota,
+         e devolve o número de ficheiros removidos.
         """
         if not os.path.exists(self.cache_dir):
             return 0
@@ -93,16 +72,14 @@ class CacheManager:
         logger.info(f"Cache limpa: {contagem} ficheiro(s) removido(s).")
         return contagem
 
-    # ------------------------------------------------------------------
-    # Quota diária — interface pública
-    # ------------------------------------------------------------------
+    # --- Quota diária ---
 
     def quota_esgotada(self) -> bool:
-        """Devolve True se o limite diário de pedidos foi atingido."""
+        """Devolve True se o limite diário de pedidos já foi atingido."""
         return self._ler_quota()["count"] >= self.max_req_dia
 
     def incrementar_quota(self) -> None:
-        """Regista mais um pedido consumido na quota diária."""
+        """Soma mais um pedido ao contador da quota diária."""
         quota = self._ler_quota()
         quota["count"] += 1
         self._escrever_quota(quota)
@@ -119,13 +96,11 @@ class CacheManager:
             "limite_por_minuto": self.max_req_minuto,
         }
 
-    # ------------------------------------------------------------------
-    # Métodos privados
-    # ------------------------------------------------------------------
+    # --- Auxiliares ---
 
     @staticmethod
     def _md5(caminho: str) -> str:
-        """Calcula o hash MD5 do ficheiro em blocos (eficiente para ficheiros grandes)."""
+        """Calcula o MD5 do ficheiro lendo-o em blocos, para nao carregar o ficheiro todo para memória."""
         h = hashlib.md5()
         with open(caminho, "rb") as f:
             for bloco in iter(lambda: f.read(65536), b""):
@@ -133,14 +108,15 @@ class CacheManager:
         return h.hexdigest()
 
     def _ler_quota(self) -> dict:
-        """Lê o ficheiro de quota, ou cria um registo novo se não existir ou for de outro dia."""
+        """Lê o ficheiro de quota, ou começa um registo novo se não existir ou for de outro dia."""
         hoje = datetime.now(timezone.utc).date().isoformat()
+
         if os.path.exists(self.quota_file):
             with open(self.quota_file, "r", encoding="utf-8") as f:
                 dados = json.load(f)
             if dados.get("date") == hoje:
                 return dados
-        # Ficheiro não existe ou é de ontem — começa do zero
+
         return {"date": hoje, "count": 0}
 
     def _escrever_quota(self, quota: dict) -> None:
