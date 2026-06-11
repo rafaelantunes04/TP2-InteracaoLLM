@@ -1,6 +1,0 @@
-2026-06-08 19:48:59,168 [INFO] A processar: train_4278.jpg | zona: Z_S1 | estratégia: B
-2026-06-08 19:48:59,169 [INFO] AFC is enabled with max remote calls: 10.
-2026-06-08 19:49:06,130 [INFO] HTTP Request: POST https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent "HTTP/1.1 200 OK"
-2026-06-08 19:49:06,134 [INFO] Quota diária: 2/500 req usadas.
-2026-06-08 19:49:06,134 [INFO] Resposta recebida da API Gemini.
-2026-06-08 19:49:06,135 [INFO] Resultado guardado em cache: inspection_cache\cb065837f28e5ce85a92eded70a309bc_B.json

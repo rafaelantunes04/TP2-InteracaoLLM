@@ -1,0 +1,46 @@
+{
+  "inspection_id": "INS_20250317_143022_001",
+  "timestamp": "2025-03-17T14:30:22Z",
+  "image_path": "C:\\Users\\Rafael Antunes\\Desktop\\Cadeiras IA\\Interação com Modelos de Larga Escala\\tp2\\data\\images\\test_2781.jpg",
+  "zone_id": "Z_S1",
+  "overall_status": "warning",
+  "issues": [
+    {
+      "issue_id": "ISS_001",
+      "type": "empty_shelf",
+      "location": "Prateleira central, lado direito (junto aos cremes de café)",
+      "severity": "medium",
+      "description": "Espaço vago significativo na prateleira de cremes de café em pó e líquidos.",
+      "confidence": 0.95,
+      "affected_area_pct": 0.15
+    },
+    {
+      "issue_id": "ISS_002",
+      "type": "misaligned",
+      "location": "Prateleira superior, centro-direita (marcas Peet's)",
+      "severity": "low",
+      "description": "Produtos desalinhados ou tombados ligeiramente na zona de cafés premium.",
+      "confidence": 0.85,
+      "affected_area_pct": 0.05
+    },
+    {
+      "issue_id": "ISS_003",
+      "type": "empty_shelf",
+      "location": "Prateleira inferior, lado direito",
+      "severity": "low",
+      "description": "Falhas de preenchimento (buracos) na disposição de cremes de café.",
+      "confidence": 0.9,
+      "affected_area_pct": 0.1
+    }
+  ],
+  "shelf_fill_rate": 0.85,
+  "products_detected": [
+    "café em grão",
+    "café moído",
+    "café solúvel",
+    "creme para café em pó",
+    "creme para café líquido",
+    "xaropes para café"
+  ],
+  "model_reasoning": "PASSO 1: A prateleira é de supermercado (corredor de café/cremes) com 6 níveis, bem organizada visualmente mas com falhas de stock. PASSO 2: A parte superior e central contêm cafés (Starbucks, Dunkin, etc.), o nível 4 e 5 contêm cremes. Nível 5 e 6 apresentam falhas visíveis de stock/buracos. PASSO 3: Identificadas falhas de preenchimento (empty_shelf) e desalinhamento de produtos. Severidade moderada pois a maioria das faces estão visíveis e organizadas, mas a falta de produto em certos itens compromete a experiência de compra. PASSO 4: Status 'warning' atribuído devido a buracos no inventário e desalinhamentos que exigem reposição imediata."
+}

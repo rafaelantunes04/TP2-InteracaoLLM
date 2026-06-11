@@ -13,15 +13,16 @@ Uso típico (pelo shelf_inspector):
         resultado = chamar_api(...)
         cache.set(chave, resultado)
 """
+
 from __future__ import annotations
 
+import config
 import hashlib
 import json
 import logging
+import os
 from datetime import datetime, timezone
-from pathlib import Path
-
-import config
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +44,9 @@ class CacheManager:
     automaticamente no início de cada dia UTC.
     """
 
-    def __init__(self, cache_dir: Path, quota_file: Path):
-        self.cache_dir = Path(cache_dir)
-        self.quota_file = Path(quota_file)
+    def __init__(self):
+        self.cache_dir = config.CACHE_DIR
+        self.quota_file = config.QUOTA_FILE
         self.max_req_dia = config.MAX_REQUESTS_PER_DAY
         self.max_req_minuto = config.MAX_REQUESTS_PER_MINUTE
 
@@ -57,23 +58,22 @@ class CacheManager:
         """Gera a chave de cache: MD5 do ficheiro de imagem + estratégia."""
         return f"{self._md5(caminho_imagem)}_{estrategia}"
 
-    def get(self, chave: str) -> dict | None:
+    def get(self, chave: str) -> Optional[dict]:
         """Devolve o resultado guardado em cache, ou None se não existir."""
-        ficheiro = self.cache_dir / f"{chave}.json"
-        if ficheiro.exists():
+        ficheiro = os.path.join(self.cache_dir, f"{chave}.json")
+        if os.path.exists(ficheiro):
             logger.info("Cache HIT — a retornar resultado em cache.")
-            return json.loads(ficheiro.read_text(encoding="utf-8"))
+            with open(ficheiro, "r", encoding="utf-8") as f:
+                return json.load(f)
         logger.debug(f"Cache MISS para chave: {chave}")
         return None
 
     def set(self, chave: str, resultado: dict) -> None:
         """Guarda o resultado em disco."""
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
-        ficheiro = self.cache_dir / f"{chave}.json"
-        ficheiro.write_text(
-            json.dumps(resultado, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        os.makedirs(self.cache_dir, exist_ok=True)
+        ficheiro = os.path.join(self.cache_dir, f"{chave}.json")
+        with open(ficheiro, "w", encoding="utf-8") as f:
+            json.dump(resultado, f, ensure_ascii=False, indent=2)
         logger.info(f"Resultado guardado em cache: {ficheiro}")
 
     def limpar(self) -> int:
@@ -81,15 +81,17 @@ class CacheManager:
 
         Devolve o número de ficheiros removidos.
         """
-        if not self.cache_dir.exists():
+        if not os.path.exists(self.cache_dir):
             return 0
 
-        ficheiros = [f for f in self.cache_dir.glob("*.json") if f.name != "_quota.json"]
-        for ficheiro in ficheiros:
-            ficheiro.unlink()
+        contagem = 0
+        for nome in os.listdir(self.cache_dir):
+            if nome.endswith(".json") and nome != "_quota.json":
+                os.remove(os.path.join(self.cache_dir, nome))
+                contagem += 1
 
-        logger.info(f"Cache limpa: {len(ficheiros)} ficheiro(s) removido(s).")
-        return len(ficheiros)
+        logger.info(f"Cache limpa: {contagem} ficheiro(s) removido(s).")
+        return contagem
 
     # ------------------------------------------------------------------
     # Quota diária — interface pública
@@ -133,13 +135,16 @@ class CacheManager:
     def _ler_quota(self) -> dict:
         """Lê o ficheiro de quota, ou cria um registo novo se não existir ou for de outro dia."""
         hoje = datetime.now(timezone.utc).date().isoformat()
-        if self.quota_file.exists():
-            dados = json.loads(self.quota_file.read_text(encoding="utf-8"))
+        if os.path.exists(self.quota_file):
+            with open(self.quota_file, "r", encoding="utf-8") as f:
+                dados = json.load(f)
             if dados.get("date") == hoje:
                 return dados
+        # Ficheiro não existe ou é de ontem — começa do zero
         return {"date": hoje, "count": 0}
 
     def _escrever_quota(self, quota: dict) -> None:
         """Persiste o estado da quota em disco."""
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self.quota_file.write_text(json.dumps(quota), encoding="utf-8")
+        os.makedirs(self.cache_dir, exist_ok=True)
+        with open(self.quota_file, "w", encoding="utf-8") as f:
+            json.dump(quota, f)

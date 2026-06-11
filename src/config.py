@@ -6,11 +6,9 @@ Todos os parâmetros configuráveis do sistema estão aqui.
 As variáveis de ambiente (API keys, etc.) são lidas do ficheiro .env.
 """
 
-from pathlib import Path
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 
-# Carrega o .env uma única vez aqui — os outros módulos não precisam de o fazer
 load_dotenv()
 
 # ---------------------------------------------------------------------------
@@ -30,17 +28,21 @@ BACKOFF_MAX_DELAY: float = 120.0      # máximo de 2 minutos
 BACKOFF_MAX_RETRIES: int = 5
 
 # ---------------------------------------------------------------------------
-# Cache local
+# Caminhos
 # ---------------------------------------------------------------------------
 
-CACHE_DIR: Path = Path("inspection_cache")
-QUOTA_FILE: Path = CACHE_DIR / "_quota.json"
+BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+CACHE_DIR: str = os.path.join(BASE_DIR, "cache")
+QUOTA_FILE: str = os.path.join(BASE_DIR, "cache", "_quota.json")
+LOG_FILE: str = os.path.join(BASE_DIR, "logs", "shelf_inspector.log")
+PROMPTS_DIR: str = os.path.join(BASE_DIR, "prompts")
+DATA_IMAGES_DIR: str = os.path.join(BASE_DIR, "data", "images")
 
 # ---------------------------------------------------------------------------
 # Logging
 # ---------------------------------------------------------------------------
 
-LOG_FILE: str = "logs/shelf_inspector.log"
 LOG_LEVEL: str = "INFO"   # DEBUG | INFO | WARNING | ERROR
 
 # ---------------------------------------------------------------------------
