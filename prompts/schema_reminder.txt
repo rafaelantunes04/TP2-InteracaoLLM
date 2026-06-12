@@ -17,7 +17,8 @@ Responde EXCLUSIVAMENTE com um objeto JSON válido. Não incluas markdown, bloco
     }
   ],
   "shelf_fill_rate": 0.75,
-  "products_detected": ["laticínios", "iogurtes"],
+  "products_detected": ["lista de categorias genéricas de produto visíveis (ex: laticínios, snacks, bebidas) — NÃO nomes de marca específicos"],
   "model_reasoning": "cadeia de raciocínio explícita antes da classificação final"
 }
 Se não houver problemas, retorna "issues": [].
+Não inventes detalhes que não consigas verificar na imagem (nomes de marca, texto em etiquetas, etc.). Se não tiveres confiança suficiente, usa uma descrição genérica e reduz o valor de "confidence".

@@ -192,8 +192,10 @@ def _processar_resposta(texto_bruto: str, caminho_imagem: str, id_zona: str) -> 
         return _resultado_erro_parse(erro, texto_bruto, caminho_imagem, id_zona)
 
     momento = datetime.now(timezone.utc)
-    dados.setdefault("inspection_id", f"INS_{momento.strftime('%Y%m%d_%H%M%S')}_001")
-    dados.setdefault("timestamp", momento.isoformat())
+    
+    dados["inspection_id"] = f"INS_{momento.strftime('%Y%m%d_%H%M%S')}_001"
+    dados["timestamp"] = momento.isoformat()
+
     dados.setdefault("overall_status", "warning")
     dados.setdefault("issues", [])
     dados.setdefault("shelf_fill_rate", 0.0)

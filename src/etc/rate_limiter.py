@@ -4,7 +4,7 @@ import logging
 import time
 
 import config
-from google.api_core.exceptions import ResourceExhausted, TooManyRequests
+from google.genai import errors
 from google import genai
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,10 @@ def chamar_com_backoff(cliente: genai.Client, conteudo: list) -> str:
             )
             return resposta.text
 
-        except (TooManyRequests, ResourceExhausted):
+        except errors.ClientError as e:
+            if e.code != 429:
+                raise
+
             if tentativa == config.BACKOFF_MAX_RETRIES:
                 raise
 
