@@ -1,0 +1,21 @@
+{
+  "inspection_id": "INS_20250522_103000_001",
+  "timestamp": "2025-05-22T10:30:00Z",
+  "image_path": "data/images/shelf_001.jpg",
+  "zone_id": "Z_S3",
+  "overall_status": "warning",
+  "issues": [
+    {
+      "issue_id": "ISS_001",
+      "type": "empty_shelf",
+      "location": "prateleira inferior, lado direito",
+      "severity": "medium",
+      "description": "Secção da prateleira inferior sem produtos visíveis.",
+      "confidence": 0.85,
+      "affected_area_pct": 25.0
+    }
+  ],
+  "shelf_fill_rate": 0.45,
+  "products_detected": ["bebidas", "snacks"],
+  "model_reasoning": "A prateleira inferior apresenta espaços vazios significativos no lado direito, reduzindo o fill rate global para 45%."
+}

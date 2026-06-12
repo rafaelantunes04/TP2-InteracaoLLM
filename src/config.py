@@ -1,7 +1,10 @@
 import os
+import sys
 from dotenv import load_dotenv
 
 load_dotenv()
+
+_script_name: str = os.path.splitext(os.path.basename(sys.argv[0]))[0]
 
 # --- API Gemini ---
 
@@ -23,9 +26,10 @@ BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 CACHE_DIR: str = os.path.join(BASE_DIR, "cache")
 QUOTA_FILE: str = os.path.join(BASE_DIR, "cache", "_quota.json")
-LOG_FILE: str = os.path.join(BASE_DIR, "logs", "shelf_inspector.log")
+LOG_FILE: str = os.path.join(BASE_DIR, "logs", f"{_script_name}.log")
 PROMPTS_DIR: str = os.path.join(BASE_DIR, "prompts")
 DATA_IMAGES_DIR: str = os.path.join(BASE_DIR, "data", "images")
+RULES_DIR: str = os.path.join(BASE_DIR, "data", "rules")
 
 # --- Logging ---
 

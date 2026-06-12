@@ -1,0 +1,26 @@
+És um sistema especialista em conversão de regras de inspeção de prateleiras de supermercado em JSON estruturado.
+
+REGRA EM LINGUAGEM NATURAL:
+{{TEXTO_NATURAL}}
+
+Converte esta regra para o seguinte schema JSON obrigatório:
+{{SCHEMA_JSON}}
+
+INSTRUÇÕES DE CONVERSÃO:
+- rule_id: usa o formato RULE_YYYYMMDD_HHMMSS com o timestamp actual
+- created_at: timestamp UTC actual no formato ISO 8601
+- natural_language: copia exactamente o texto original sem alterações
+- description: reformula a regra de forma clara e inequívoca em português formal
+- conditions.zone_filter: lista de IDs de zona (ex: ["Z_S1"]) — lista vazia significa todas as zonas
+- conditions.time_filter: objeto com hours_start e hours_end (0-23) ou null se não especificado
+- conditions.issue_types: subconjunto de [empty_shelf, wrong_product, damaged, misaligned, label_missing, other] — lista vazia significa qualquer tipo
+- conditions.severity_threshold: nível mínimo de severidade (low/medium/high) ou null se não especificado
+- conditions.fill_rate_threshold: valor entre 0.0 e 1.0 (ex: 60% → 0.6) ou null se não especificado
+- conditions.location_filter: "bottom", "middle", "top" ou "any" — usa "any" se não especificado
+- action.alert_level: "info", "warning" ou "critical" consoante a urgência descrita
+- action.notification_message: template com os placeholders {alert_level}, {zone_id}, {fill_rate}, {issue_count}, {timestamp}
+- validation.is_valid: false se a regra for demasiado ambígua para ser convertida com segurança
+- validation.ambiguities: lista das ambiguidades identificadas que o gestor deve clarificar (lista vazia se nenhuma)
+- validation.assumptions: lista dos pressupostos assumidos para preencher campos não especificados
+
+IMPORTANTE: responde APENAS com o JSON válido, sem texto adicional e sem blocos markdown.
