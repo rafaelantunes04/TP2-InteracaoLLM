@@ -31,6 +31,7 @@ PROMPTS_DIR: str = os.path.join(BASE_DIR, "prompts")
 DATA_IMAGES_DIR: str = os.path.join(BASE_DIR, "data", "images")
 RULES_DIR: str = os.path.join(BASE_DIR, "data", "rules")
 INSPECTIONS_DIR: str = os.path.join(BASE_DIR, "data", "inspections")
+REPORTS_DIR:     str = os.path.join(BASE_DIR, "data", "reports")
 
 # --- Logging ---
 
@@ -51,3 +52,7 @@ RAG_COLLECTION_HYBRID: str = "inspections_hybrid"
 RAG_COLLECTION_FULL: str = "inspections_full_record"
 
 RAG_DEFAULT_K: int = 3
+
+# --- Report Generator ---
+
+REPORT_MAX_TOKENS: int = 4096
