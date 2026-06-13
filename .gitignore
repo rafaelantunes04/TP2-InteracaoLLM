@@ -3,4 +3,5 @@ data/images
 logs/*.log
 __pycache__/
 cache/*
+data/inspections/*
 data/rules/*

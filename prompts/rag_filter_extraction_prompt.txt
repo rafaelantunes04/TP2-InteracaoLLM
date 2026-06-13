@@ -1,0 +1,15 @@
+Analisa a seguinte query sobre inspeções de prateleiras e extrai os filtros
+possíveis em JSON. Se não identificares um campo, usa null.
+
+Campos possíveis:
+- zone_id: string com ID de zona (ex: "Z_S1") ou null
+- days_back: número de dias para trás a considerar (ex: 7, 14) ou null
+- issue_type: "empty_shelf", "wrong_product", "damaged", "misaligned",
+  "label_missing" ou null
+- status: "ok", "warning" ou "critical" ou null
+
+QUERY:
+{{QUERY}}
+
+IMPORTANTE: responde APENAS com o JSON válido, sem texto adicional e sem
+blocos markdown.

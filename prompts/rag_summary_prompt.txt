@@ -1,0 +1,18 @@
+És um sistema de análise de prateleiras de retalho.
+
+Gera um resumo RICO e DETALHADO em português da inspeção abaixo. Este resumo
+vai ser indexado numa base de dados vetorial e usado para recuperação semântica
+futura, por isso inclui sempre:
+- zona e data/hora da inspeção
+- fill rate
+- tipos de problemas detetados e respetiva severidade
+- localização dos problemas na prateleira (ex: "prateleira inferior")
+- produtos detetados
+- quaisquer padrões notáveis
+
+MÍNIMO 80 palavras. Sem introdução genérica — começa directamente pelos factos.
+
+INSPEÇÃO:
+{{INSPECTION_JSON}}
+
+RESUMO:

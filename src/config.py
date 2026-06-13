@@ -30,6 +30,7 @@ LOG_FILE: str = os.path.join(BASE_DIR, "logs", f"{_script_name}.log")
 PROMPTS_DIR: str = os.path.join(BASE_DIR, "prompts")
 DATA_IMAGES_DIR: str = os.path.join(BASE_DIR, "data", "images")
 RULES_DIR: str = os.path.join(BASE_DIR, "data", "rules")
+INSPECTIONS_DIR: str = os.path.join(BASE_DIR, "data", "inspections")
 
 # --- Logging ---
 
@@ -39,3 +40,14 @@ LOG_LEVEL: str = "INFO"   # DEBUG | INFO | WARNING | ERROR
 
 DEFAULT_ZONE_ID: str = "Z_S1"
 DEFAULT_STRATEGY: str = "B"   # A=zero-shot | B=chain-of-thought | C=few-shot
+
+# --- RAG Memory ---
+
+EMBED_MODEL_NAME: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+
+VECTORSTORE_DIR: str = os.path.join(BASE_DIR, "vectorstore")
+
+RAG_COLLECTION_HYBRID: str = "inspections_hybrid"
+RAG_COLLECTION_FULL: str = "inspections_full_record"
+
+RAG_DEFAULT_K: int = 3

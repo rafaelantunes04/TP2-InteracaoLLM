@@ -97,6 +97,19 @@ def _extrair_json(texto: str) -> dict:
     raise json.JSONDecodeError("Nenhum bloco JSON válido encontrado", texto, 0)
 
 
+# --- Persistência ---
+
+def _guardar_inspecao(resultado: dict) -> str:
+    """Persiste o resultado da inspeção em config.INSPECTIONS_DIR como JSON. Devolve o caminho do ficheiro."""
+    os.makedirs(config.INSPECTIONS_DIR, exist_ok=True)
+    inspection_id = resultado.get("inspection_id", "INS_UNKNOWN")
+    caminho = os.path.join(config.INSPECTIONS_DIR, f"{inspection_id}.json")
+    with open(caminho, "w", encoding="utf-8") as f:
+        json.dump(resultado, f, ensure_ascii=False, indent=2)
+    logger.info(f"Inspeção guardada em: {caminho}")
+    return caminho
+
+
 def _resultado_erro_parse(erro: Exception, texto_bruto: str, caminho_imagem: str, id_zona: str) -> dict:
     """Constrói um resultado estruturado quando o parse da resposta da API falha."""
     momento = datetime.now(timezone.utc)
@@ -146,6 +159,7 @@ def inspecionar_prateleira(
     chave = _cache.chave(caminho_imagem, estrategia)
     resultado_em_cache = _cache.get(chave)
     if resultado_em_cache is not None:
+        _guardar_inspecao(resultado_em_cache)
         return resultado_em_cache
 
     if _cache.quota_esgotada():
@@ -180,6 +194,7 @@ def inspecionar_prateleira(
 
     resultado = _processar_resposta(texto_bruto, caminho_imagem, id_zona)
     _cache.set(chave, resultado)
+    _guardar_inspecao(resultado)
     return resultado
 
 
